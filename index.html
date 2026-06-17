@@ -1,10 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-
-<title>2048</title>
+<title>2048-大宇烟花版</title>
 
 <style>
 *{
@@ -29,7 +29,7 @@ align-items:center;
 }
 
 .container{
-width:min(92vw,500px);
+width:min(95vw,500px);
 }
 
 .header{
@@ -40,7 +40,7 @@ margin-bottom:15px;
 }
 
 .title{
-font-size:48px;
+font-size:52px;
 font-weight:bold;
 color:#776e65;
 }
@@ -50,32 +50,32 @@ display:flex;
 gap:10px;
 }
 
-.score-box{
+.scoreBox{
 background:#bbada0;
 color:#fff;
 padding:10px 15px;
-border-radius:6px;
+border-radius:8px;
 text-align:center;
-min-width:80px;
+min-width:90px;
 }
 
-.score-box div:first-child{
+.scoreBox .label{
 font-size:12px;
 }
 
-.score-box div:last-child{
+.scoreBox .value{
 font-size:22px;
 font-weight:bold;
 }
 
 .controls{
-margin-bottom:12px;
+margin-bottom:15px;
 }
 
 button{
-background:#8f7a66;
 border:none;
-color:white;
+background:#8f7a66;
+color:#fff;
 padding:10px 18px;
 border-radius:6px;
 font-size:16px;
@@ -96,17 +96,40 @@ aspect-ratio:1;
 display:flex;
 justify-content:center;
 align-items:center;
-font-weight:bold;
+border-radius:8px;
 font-size:clamp(20px,6vw,36px);
-border-radius:6px;
+font-weight:bold;
+transition:.12s;
 }
 
 .msg{
 margin-top:15px;
 text-align:center;
-font-size:22px;
+font-size:24px;
 font-weight:bold;
 color:#776e65;
+}
+
+/* 烟花 */
+
+.firework{
+position:fixed;
+width:10px;
+height:10px;
+border-radius:50%;
+pointer-events:none;
+z-index:99999;
+}
+
+@keyframes explode{
+from{
+transform:translate(0,0) scale(1);
+opacity:1;
+}
+to{
+transform:translate(var(--dx),var(--dy)) scale(0);
+opacity:0;
+}
 }
 </style>
 </head>
@@ -115,30 +138,31 @@ color:#776e65;
 <div class="container">
 
 <div class="header">
-<div class="title">2048-大宇同学</div>
+
+<div class="title">2048</div>
 
 <div class="panel">
 
-<div class="score-box">
-<div>分数</div>
-<div id="score">0</div>
+<div class="scoreBox">
+<div class="label">分数</div>
+<div class="value" id="score">0</div>
 </div>
 
-<div class="score-box">
-<div>最高分</div>
-<div id="best">0</div>
+<div class="scoreBox">
+<div class="label">最高分</div>
+<div class="value" id="best">0</div>
 </div>
 
 </div>
 </div>
 
 <div class="controls">
-<button onclick="startGame()">重新开始</button>
+<button onclick="newGame()">重新开始</button>
 </div>
 
-<div class="board" id="board"></div>
+<div id="board" class="board"></div>
 
-<div class="msg" id="msg"></div>
+<div id="msg" class="msg"></div>
 
 </div>
 
@@ -148,7 +172,7 @@ const SIZE=4;
 
 let board=[];
 let score=0;
-let best=parseInt(localStorage.getItem("best2048")||"0");
+let best=parseInt(localStorage.getItem("best2048")||0);
 
 const boardEl=document.getElementById("board");
 
@@ -167,10 +191,53 @@ const colors={
 2048:"#edc22e"
 };
 
-function startGame(){
+function firework(x,y){
+
+const palette=[
+"#ff4d4f",
+"#faad14",
+"#52c41a",
+"#1890ff",
+"#722ed1",
+"#eb2f96"
+];
+
+for(let i=0;i<25;i++){
+
+const p=document.createElement("div");
+
+p.className="firework";
+
+p.style.left=x+"px";
+p.style.top=y+"px";
+
+p.style.background=
+palette[Math.floor(Math.random()*palette.length)];
+
+const angle=Math.random()*Math.PI*2;
+const distance=50+Math.random()*100;
+
+const dx=Math.cos(angle)*distance;
+const dy=Math.sin(angle)*distance;
+
+p.style.setProperty("--dx",dx+"px");
+p.style.setProperty("--dy",dy+"px");
+
+p.style.animation="explode 700ms ease-out forwards";
+
+document.body.appendChild(p);
+
+p.addEventListener("animationend",()=>{
+p.remove();
+});
+
+}
+}
+
+function newGame(){
 
 board=Array(SIZE)
-.fill(0)
+.fill()
 .map(()=>Array(SIZE).fill(0));
 
 score=0;
@@ -199,7 +266,8 @@ empty.push([r,c]);
 
 if(empty.length===0)return;
 
-let [r,c]=empty[Math.floor(Math.random()*empty.length)];
+const [r,c]=
+empty[Math.floor(Math.random()*empty.length)];
 
 board[r][c]=Math.random()<0.9?2:4;
 }
@@ -213,23 +281,28 @@ for(let c=0;c<SIZE;c++){
 
 const v=board[r][c];
 
-const div=document.createElement("div");
+const cell=document.createElement("div");
 
-div.className="cell";
-div.style.background=colors[v]||"#3c3a32";
-div.style.color=v>=8?"#fff":"#776e65";
-div.textContent=v===0?"":v;
+cell.className="cell";
 
-boardEl.appendChild(div);
+cell.style.background=
+colors[v]||"#3c3a32";
+
+cell.style.color=
+v>=8?"#fff":"#776e65";
+
+cell.textContent=v===0?"":v;
+
+boardEl.appendChild(cell);
 
 }
 }
 
-document.getElementById("score").innerText=score;
-document.getElementById("best").innerText=best;
+scoreEl.textContent=score;
+bestEl.textContent=best;
 }
 
-function compress(row){
+function slide(row){
 
 let arr=row.filter(v=>v);
 
@@ -241,11 +314,22 @@ arr[i]*=2;
 
 score+=arr[i];
 
+arr[i+1]=0;
+
+const rect=boardEl.getBoundingClientRect();
+
+firework(
+rect.left+rect.width/2,
+rect.top+rect.height/2
+);
+
 if(arr[i]===2048){
-document.getElementById("msg").innerText="🎉 达到2048";
+msg.innerText="🎉 达到2048！";
 }
 
-arr[i+1]=0;
+if(navigator.vibrate){
+navigator.vibrate(30);
+}
 }
 }
 
@@ -258,6 +342,22 @@ arr.push(0);
 return arr;
 }
 
+function rotate(){
+
+let next=
+Array(SIZE)
+.fill()
+.map(()=>Array(SIZE).fill(0));
+
+for(let r=0;r<SIZE;r++){
+for(let c=0;c<SIZE;c++){
+next[c][SIZE-1-r]=board[r][c];
+}
+}
+
+board=next;
+}
+
 function moveLeft(){
 
 let changed=false;
@@ -266,33 +366,14 @@ for(let r=0;r<SIZE;r++){
 
 const old=board[r].join(",");
 
-board[r]=compress(board[r]);
+board[r]=slide(board[r]);
 
 if(old!==board[r].join(",")){
 changed=true;
 }
-
 }
 
 return changed;
-}
-
-function rotate(){
-
-const newBoard=
-Array(SIZE)
-.fill(0)
-.map(()=>Array(SIZE).fill(0));
-
-for(let r=0;r<SIZE;r++){
-for(let c=0;c<SIZE;c++){
-
-newBoard[c][SIZE-1-r]=board[r][c];
-
-}
-}
-
-board=newBoard;
 }
 
 function move(dir){
@@ -306,37 +387,25 @@ changed=moveLeft();
 break;
 
 case "right":
-
 board=board.map(r=>r.reverse());
-
 changed=moveLeft();
-
 board=board.map(r=>r.reverse());
-
 break;
 
 case "up":
-
 rotate();
 rotate();
 rotate();
-
 changed=moveLeft();
-
 rotate();
-
 break;
 
 case "down":
-
 rotate();
-
 changed=moveLeft();
-
 rotate();
 rotate();
 rotate();
-
 break;
 }
 
@@ -358,8 +427,7 @@ render();
 
 if(gameOver()){
 
-document.getElementById("msg")
-.innerText="😢 游戏结束";
+msg.innerText="😢 游戏结束";
 }
 }
 }
@@ -383,8 +451,6 @@ return false;
 return true;
 }
 
-/* PC键盘 */
-
 document.addEventListener("keydown",e=>{
 
 if(e.key==="ArrowLeft") move("left");
@@ -393,8 +459,6 @@ if(e.key==="ArrowUp") move("up");
 if(e.key==="ArrowDown") move("down");
 
 });
-
-/* 微信兼容滑动 */
 
 let startX=0;
 let startY=0;
@@ -415,36 +479,32 @@ const threshold=25;
 
 if(Math.abs(dx)>Math.abs(dy)){
 
-if(dx>threshold){
-move("right");
-}
-
-if(dx<-threshold){
-move("left");
-}
+if(dx>threshold) move("right");
+if(dx<-threshold) move("left");
 
 }else{
 
-if(dy>threshold){
-move("down");
-}
+if(dy>threshold) move("down");
+if(dy<-threshold) move("up");
 
-if(dy<-threshold){
-move("up");
-}
 }
 
 });
 
-/* 微信旧内核兼容 */
+boardEl.addEventListener(
+"touchmove",
+e=>e.preventDefault(),
+{passive:false}
+);
 
-boardEl.addEventListener("touchmove",function(e){
-e.preventDefault();
-},{passive:false});
+const scoreEl=document.getElementById("score");
+const bestEl=document.getElementById("best");
+const msg=document.getElementById("msg");
 
-startGame();
+newGame();
 
 </script>
 
 </body>
 </html>
+```
