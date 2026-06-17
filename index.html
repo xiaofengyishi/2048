@@ -1,116 +1,112 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,
-      initial-scale=1,
-      maximum-scale=1,
-      user-scalable=no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
 <title>2048</title>
 
 <style>
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
+margin:0;
+padding:0;
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+height:100%;
+overflow:hidden;
+touch-action:none;
+background:#faf8ef;
+font-family:Arial,sans-serif;
 }
 
 body{
-    font-family:Arial,sans-serif;
-    background:#faf8ef;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-    touch-action:none;
-    overflow:hidden;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
 .container{
-    width:95vw;
-    max-width:500px;
+width:min(92vw,500px);
 }
 
 .header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
 }
 
 .title{
-    font-size:56px;
-    font-weight:bold;
-    color:#776e65;
+font-size:48px;
+font-weight:bold;
+color:#776e65;
 }
 
-.score-wrap{
-    display:flex;
-    gap:10px;
+.panel{
+display:flex;
+gap:10px;
 }
 
-.box{
-    background:#bbada0;
-    color:white;
-    padding:10px 16px;
-    border-radius:6px;
-    text-align:center;
-    min-width:90px;
+.score-box{
+background:#bbada0;
+color:#fff;
+padding:10px 15px;
+border-radius:6px;
+text-align:center;
+min-width:80px;
 }
 
-.box small{
-    display:block;
-    font-size:12px;
+.score-box div:first-child{
+font-size:12px;
 }
 
-.box span{
-    font-size:22px;
-    font-weight:bold;
+.score-box div:last-child{
+font-size:22px;
+font-weight:bold;
 }
 
-.btns{
-    margin:12px 0;
+.controls{
+margin-bottom:12px;
 }
 
 button{
-    border:none;
-    background:#8f7a66;
-    color:white;
-    padding:12px 20px;
-    border-radius:6px;
-    cursor:pointer;
-    font-size:16px;
+background:#8f7a66;
+border:none;
+color:white;
+padding:10px 18px;
+border-radius:6px;
+font-size:16px;
 }
 
 .board{
-    background:#bbada0;
-    border-radius:10px;
-    padding:10px;
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
+background:#bbada0;
+padding:10px;
+border-radius:10px;
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+touch-action:none;
 }
 
 .cell{
-    aspect-ratio:1;
-    border-radius:8px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:bold;
-    transition:0.15s;
-    font-size:clamp(20px,5vw,38px);
+aspect-ratio:1;
+display:flex;
+justify-content:center;
+align-items:center;
+font-weight:bold;
+font-size:clamp(20px,6vw,36px);
+border-radius:6px;
 }
 
 .msg{
-    text-align:center;
-    margin-top:15px;
-    color:#776e65;
-    font-size:24px;
-    font-weight:bold;
+margin-top:15px;
+text-align:center;
+font-size:22px;
+font-weight:bold;
+color:#776e65;
 }
 </style>
 </head>
@@ -118,43 +114,45 @@ button{
 
 <div class="container">
 
-    <div class="header">
-        <div class="title">2048-大宇同学</div>
+<div class="header">
+<div class="title">2048</div>
 
-        <div class="score-wrap">
+<div class="panel">
 
-            <div class="box">
-                <small>分数</small>
-                <span id="score">0</span>
-            </div>
+<div class="score-box">
+<div>分数</div>
+<div id="score">0</div>
+</div>
 
-            <div class="box">
-                <small>最高分</small>
-                <span id="best">0</span>
-            </div>
+<div class="score-box">
+<div>最高分</div>
+<div id="best">0</div>
+</div>
 
-        </div>
-    </div>
+</div>
+</div>
 
-    <div class="btns">
-        <button onclick="newGame()">重新开始</button>
-    </div>
+<div class="controls">
+<button onclick="startGame()">重新开始</button>
+</div>
 
-    <div id="board" class="board"></div>
+<div class="board" id="board"></div>
 
-    <div id="msg" class="msg"></div>
+<div class="msg" id="msg"></div>
 
 </div>
 
 <script>
 
-const SIZE = 4;
+const SIZE=4;
 
-let board = [];
-let score = 0;
-let best = Number(localStorage.getItem("best2048") || 0);
+let board=[];
+let score=0;
+let best=parseInt(localStorage.getItem("best2048")||"0");
 
-const colors = {
+const boardEl=document.getElementById("board");
+
+const colors={
 0:"#cdc1b4",
 2:"#eee4da",
 4:"#ede0c8",
@@ -169,300 +167,282 @@ const colors = {
 2048:"#edc22e"
 };
 
-function newGame(){
+function startGame(){
 
-    board = Array(SIZE)
-        .fill()
-        .map(()=>Array(SIZE).fill(0));
+board=Array(SIZE)
+.fill(0)
+.map(()=>Array(SIZE).fill(0));
 
-    score = 0;
+score=0;
 
-    document.getElementById("msg").innerText="";
+document.getElementById("msg").innerText="";
 
-    addRandom();
-    addRandom();
+spawn();
+spawn();
 
-    render();
+render();
 }
 
-function addRandom(){
+function spawn(){
 
-    const empty=[];
+let empty=[];
 
-    for(let r=0;r<SIZE;r++){
-        for(let c=0;c<SIZE;c++){
+for(let r=0;r<SIZE;r++){
+for(let c=0;c<SIZE;c++){
 
-            if(board[r][c]===0){
-                empty.push([r,c]);
-            }
-        }
-    }
+if(board[r][c]===0){
+empty.push([r,c]);
+}
 
-    if(!empty.length) return;
+}
+}
 
-    const [r,c] =
-        empty[Math.floor(Math.random()*empty.length)];
+if(empty.length===0)return;
 
-    board[r][c] =
-        Math.random()<0.9 ? 2 : 4;
+let [r,c]=empty[Math.floor(Math.random()*empty.length)];
+
+board[r][c]=Math.random()<0.9?2:4;
 }
 
 function render(){
 
-    const boardDiv =
-        document.getElementById("board");
+boardEl.innerHTML="";
 
-    boardDiv.innerHTML="";
+for(let r=0;r<SIZE;r++){
+for(let c=0;c<SIZE;c++){
 
-    board.flat().forEach(value=>{
+const v=board[r][c];
 
-        const cell =
-            document.createElement("div");
+const div=document.createElement("div");
 
-        cell.className="cell";
+div.className="cell";
+div.style.background=colors[v]||"#3c3a32";
+div.style.color=v>=8?"#fff":"#776e65";
+div.textContent=v===0?"":v;
 
-        cell.style.background =
-            colors[value] || "#3c3a32";
+boardEl.appendChild(div);
 
-        cell.style.color =
-            value>=8 ? "#fff" : "#776e65";
-
-        cell.innerText =
-            value===0 ? "" : value;
-
-        boardDiv.appendChild(cell);
-    });
-
-    document.getElementById("score").innerText =
-        score;
-
-    document.getElementById("best").innerText =
-        best;
+}
 }
 
-function slide(row){
-
-    row = row.filter(v=>v);
-
-    for(let i=0;i<row.length-1;i++){
-
-        if(row[i]===row[i+1]){
-
-            row[i]*=2;
-
-            score += row[i];
-
-            if(row[i]===2048){
-
-                document.getElementById("msg")
-                .innerText="🎉 达到2048！";
-            }
-
-            row[i+1]=0;
-        }
-    }
-
-    row = row.filter(v=>v);
-
-    while(row.length<SIZE){
-        row.push(0);
-    }
-
-    return row;
+document.getElementById("score").innerText=score;
+document.getElementById("best").innerText=best;
 }
 
-function rotate(mat){
+function compress(row){
 
-    let result =
-        Array(SIZE)
-        .fill()
-        .map(()=>Array(SIZE).fill(0));
+let arr=row.filter(v=>v);
 
-    for(let r=0;r<SIZE;r++){
-        for(let c=0;c<SIZE;c++){
+for(let i=0;i<arr.length-1;i++){
 
-            result[c][SIZE-1-r] =
-                mat[r][c];
-        }
-    }
+if(arr[i]===arr[i+1]){
 
-    return result;
+arr[i]*=2;
+
+score+=arr[i];
+
+if(arr[i]===2048){
+document.getElementById("msg").innerText="🎉 达到2048";
+}
+
+arr[i+1]=0;
+}
+}
+
+arr=arr.filter(v=>v);
+
+while(arr.length<SIZE){
+arr.push(0);
+}
+
+return arr;
 }
 
 function moveLeft(){
 
-    let changed=false;
+let changed=false;
 
-    for(let r=0;r<SIZE;r++){
+for(let r=0;r<SIZE;r++){
 
-        let old=[...board[r]];
+const old=board[r].join(",");
 
-        board[r]=slide(board[r]);
+board[r]=compress(board[r]);
 
-        if(old.join()!==board[r].join()){
-            changed=true;
-        }
-    }
+if(old!==board[r].join(",")){
+changed=true;
+}
 
-    return changed;
+}
+
+return changed;
+}
+
+function rotate(){
+
+const newBoard=
+Array(SIZE)
+.fill(0)
+.map(()=>Array(SIZE).fill(0));
+
+for(let r=0;r<SIZE;r++){
+for(let c=0;c<SIZE;c++){
+
+newBoard[c][SIZE-1-r]=board[r][c];
+
+}
+}
+
+board=newBoard;
 }
 
 function move(dir){
 
-    let changed=false;
+let changed=false;
 
-    switch(dir){
+switch(dir){
 
-        case "left":
-            changed=moveLeft();
-            break;
+case "left":
+changed=moveLeft();
+break;
 
-        case "right":
-            board=board.map(r=>r.reverse());
-            changed=moveLeft();
-            board=board.map(r=>r.reverse());
-            break;
+case "right":
 
-        case "up":
-            board=rotate(rotate(rotate(board)));
-            changed=moveLeft();
-            board=rotate(board);
-            break;
+board=board.map(r=>r.reverse());
 
-        case "down":
-            board=rotate(board);
-            changed=moveLeft();
-            board=rotate(rotate(rotate(board)));
-            break;
-    }
+changed=moveLeft();
 
-    if(changed){
+board=board.map(r=>r.reverse());
 
-        addRandom();
+break;
 
-        if(score>best){
+case "up":
 
-            best=score;
+rotate();
+rotate();
+rotate();
 
-            localStorage.setItem(
-                "best2048",
-                best
-            );
-        }
+changed=moveLeft();
 
-        render();
+rotate();
 
-        if(gameOver()){
+break;
 
-            document.getElementById("msg")
-            .innerText="😢 游戏结束";
-        }
-    }
+case "down":
+
+rotate();
+
+changed=moveLeft();
+
+rotate();
+rotate();
+rotate();
+
+break;
+}
+
+if(changed){
+
+spawn();
+
+if(score>best){
+
+best=score;
+
+localStorage.setItem(
+"best2048",
+best
+);
+}
+
+render();
+
+if(gameOver()){
+
+document.getElementById("msg")
+.innerText="😢 游戏结束";
+}
+}
 }
 
 function gameOver(){
 
-    for(let r=0;r<SIZE;r++){
-        for(let c=0;c<SIZE;c++){
+for(let r=0;r<SIZE;r++){
+for(let c=0;c<SIZE;c++){
 
-            if(board[r][c]===0)
-                return false;
+if(board[r][c]===0)
+return false;
 
-            if(
-                c<SIZE-1 &&
-                board[r][c]===board[r][c+1]
-            )
-                return false;
+if(c<3&&board[r][c]===board[r][c+1])
+return false;
 
-            if(
-                r<SIZE-1 &&
-                board[r][c]===board[r+1][c]
-            )
-                return false;
-        }
-    }
-
-    return true;
+if(r<3&&board[r][c]===board[r+1][c])
+return false;
+}
 }
 
-/* 键盘 */
+return true;
+}
 
-document.addEventListener(
-"keydown",
-e=>{
+/* PC键盘 */
 
-    if(e.key==="ArrowLeft")
-        move("left");
+document.addEventListener("keydown",e=>{
 
-    if(e.key==="ArrowRight")
-        move("right");
+if(e.key==="ArrowLeft") move("left");
+if(e.key==="ArrowRight") move("right");
+if(e.key==="ArrowUp") move("up");
+if(e.key==="ArrowDown") move("down");
 
-    if(e.key==="ArrowUp")
-        move("up");
-
-    if(e.key==="ArrowDown")
-        move("down");
 });
 
-/* 手机滑动 */
+/* 微信兼容滑动 */
 
 let startX=0;
 let startY=0;
 
-document.addEventListener(
-"touchstart",
-e=>{
+boardEl.addEventListener("pointerdown",e=>{
 
-    startX =
-        e.touches[0].clientX;
+startX=e.clientX;
+startY=e.clientY;
 
-    startY =
-        e.touches[0].clientY;
+});
 
-},{passive:true});
+boardEl.addEventListener("pointerup",e=>{
 
-document.addEventListener(
-"touchend",
-e=>{
+const dx=e.clientX-startX;
+const dy=e.clientY-startY;
 
-    let endX =
-        e.changedTouches[0].clientX;
+const threshold=25;
 
-    let endY =
-        e.changedTouches[0].clientY;
+if(Math.abs(dx)>Math.abs(dy)){
 
-    let dx=endX-startX;
-    let dy=endY-startY;
+if(dx>threshold){
+move("right");
+}
 
-    const limit=30;
+if(dx<-threshold){
+move("left");
+}
 
-    if(
-        Math.abs(dx)>
-        Math.abs(dy)
-    ){
+}else{
 
-        if(Math.abs(dx)<limit)
-            return;
+if(dy>threshold){
+move("down");
+}
 
-        if(dx>0)
-            move("right");
-        else
-            move("left");
-    }
-    else{
+if(dy<-threshold){
+move("up");
+}
+}
 
-        if(Math.abs(dy)<limit)
-            return;
+});
 
-        if(dy>0)
-            move("down");
-        else
-            move("up");
-    }
+/* 微信旧内核兼容 */
 
-},{passive:true});
+boardEl.addEventListener("touchmove",function(e){
+e.preventDefault();
+},{passive:false});
 
-newGame();
+startGame();
 
 </script>
 
